@@ -1,5 +1,5 @@
 # jigsaw-static-analysis-lab
-Static analysis of Jigsaw ransomware using PEStudio and VirusTotal. MITRE ATT&amp;CK mapped.
+Static analysis of Jigsaw ransomware using PEStudio and VirusTotal. MITRE ATT&CK mapped.
 
 # Jigsaw Ransomware Static Analysis Lab
 
@@ -31,6 +31,16 @@ Jigsaw is a .NET ransomware strain first observed in 2016, built on the HiddenTe
 | VirusTotal score | 56/72 |
 | Family labels | jigsaw, msil, hiddentear |
 
+Sample sourced from MalwareBazaar using the `Jigsaw` tag filter:
+
+![MalwareBazaar search results showing Jigsaw sample](images/malwarebazaar-search-results.png)
+
+![MalwareBazaar download page for JigsawRansomware.exe](images/malwarebazaar-download-page.png)
+
+PEStudio file overview confirming metadata:
+
+![PEStudio file overview](images/pestudio-file-overview.png)
+
 ---
 
 ## Static Analysis Findings
@@ -42,6 +52,10 @@ PEStudio confirmed a valid MZ/PE header. The file is a 32-bit .NET executable co
 ### Entropy
 
 Entropy of 7.356 indicates partial obfuscation. Combined with the `obfuscated` behavior tag on VirusTotal and `detect-debug-environment` flagging, the binary uses anti-analysis techniques — consistent with the sample terminating when opened inside a VM analysis environment.
+
+PEStudio indicators tab flagging suspicious characteristics:
+
+![PEStudio indicators panel](images/pestudio-indicators.png)
 
 ### Imports
 
@@ -64,13 +78,19 @@ PEStudio flagged 8+ suspicious imports:
 - "Thanks from your friends at DeltaSEC Corp. #2019"
 - "Please, send at least $... worth of Bitcoin here"
 
+![PEStudio strings - hardcoded ransom note text](images/pestudio-strings-ransom-note.png)
+
 **Payment infrastructure:**
 - Bitcoin address: `12Xspzstah37626slkwKhsKSH`
 - Bitcoin API: `http://btc.blockr.io/api/v1/`
 - Functions: `vanityAddresses`, `coin/info/`, `address/balance/`, `buttonCheckPayment`
 
+![PEStudio strings - Bitcoin payment infrastructure](images/pestudio-strings-bitcoin-payment.png)
+
 **Target file extensions:**
 `.jpg .jpeg .raw .tif .gif .png .bmp .3dm .max .accdb .db` (partial list)
+
+![PEStudio strings - target file extensions](images/pestudio-strings-file-extensions.png)
 
 **Ransomware mechanics:**
 - `ExtensionsToEncrypt` — file targeting list
@@ -79,6 +99,8 @@ PEStudio flagged 8+ suspicious imports:
 - `59:59` — countdown timer start value
 - `.locked` — extension appended to encrypted files
 - `\DeleteItself.bat` — self-deletion script post-payment
+
+![PEStudio strings - encryption and ransomware function names](images/pestudio-strings-encryption-functions.png)
 
 ### VirusTotal
 
@@ -93,6 +115,10 @@ PEStudio flagged 8+ suspicious imports:
 | AliCloud | Ransomware:Win/Jigsaw.AZ |
 
 Behavior tags: `detect-debug-environment`, `long-sleeps`, `obfuscated`, `persistence`
+
+![VirusTotal detection results — 56/72 engines](images/virustotal-detection.png)
+
+![VirusTotal behavior tags](images/virustotal-behavior.png)
 
 ---
 
@@ -118,6 +144,8 @@ Behavior tags: `detect-debug-environment`, `long-sleeps`, `obfuscated`, `persist
 
 Source: VirusTotal Behavior tab, 33 MITRE signatures across CAPA, CAPE Sandbox, Zenbox, and Microsoft Sysinternals sandboxes.
 
+![MITRE ATT&CK Navigator — Jigsaw technique coverage](images/mitre-attack-navigator.png)
+
 ---
 
 ## Environment Setup
@@ -127,6 +155,12 @@ Source: VirusTotal Behavior tab, 33 MITRE signatures across CAPA, CAPE Sandbox, 
 - **Defender:** Real-time Protection and Tamper Protection disabled before analysis
 - **Snapshot:** clean-baseline taken before sample transfer
 - **Sample source:** MalwareBazaar — tag:Jigsaw, downloaded with ZIP password `infected`
+
+Windows Defender configuration before analysis:
+
+![Windows Defender real-time protection disabled](images/defender-realtime-off.png)
+
+![Windows Defender tamper protection disabled](images/defender-tamper-off.png)
 
 ---
 
