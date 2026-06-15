@@ -172,6 +172,6 @@ This is part of the Cowboy Bebop Homelab series. All VMs are named after ships f
 - Swordfish II — Windows 11 analysis workstation
 - Red Dragon — Kali Linux
 
-Previous lab: [Cowboy Bebop Threat Hunting Lab](https://medium.com/@jayden.williams/see-you-space-cowboy)
+Previous lab: [Cowboy Bebop Threat Hunting Lab](https://medium.com/@jwilliams.cyber)
 
 Medium post: https://medium.com/p/43d2a0759624
