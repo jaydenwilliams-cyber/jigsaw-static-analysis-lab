@@ -175,3 +175,63 @@ This is part of the Cowboy Bebop Homelab series. All VMs are named after ships f
 Previous lab: [Cowboy Bebop Threat Hunting Lab](https://medium.com/@jwilliams.cyber)
 
 Medium post: https://medium.com/p/43d2a0759624
+
+
+---
+
+## Dynamic Analysis
+
+**Date:** June 15, 2026
+**Environment:** Swordfish II — Windows 11 VM, VirtualBox, Host-Only network adapter
+**Tools:** Process Monitor (Sysinternals), Wireshark 4.6.6
+
+### Setup
+
+ProcMon and Wireshark were running before detonation. Host-Only adapter, Defender off, clean snapshot in place.
+
+First run threw a .NET path length exception. The filename was the full SHA256 hash — 64 characters — which pushed the full path past Windows’ 260-character limit. Renamed it to `jigsaw.exe` and it launched.
+
+### Execution
+
+First thing on screen was a .NET initialization error: "DeltaSEC Has Successfully hacked ur pc: NOW see the results." Confirmed execution.
+
+![Execution popup](images/jigsaw-execution-popup.png)
+
+### Persistence
+
+Jigsaw dropped copies of itself to two AppData locations:
+
+- `C:\Users\46jay\AppData\Roaming\deltasec\deltasec.exe`
+- `C:\Users\46jay\AppData\Local\deltasec\deltasec.exe`
+
+Both folders showed up at 2:24 PM — the same minute as detonation. A third folder, `System32Work`, appeared in AppData\Roaming. The binary’s description field was `deltasechax`, which matched the DeltaSEC Corp alias from static analysis strings.
+
+![AppData persistence folders](images/jigsaw-persistence-appdata.png)
+
+![Process tree — deltasec.exe](images/jigsaw-process-tree-deltasec.png)
+
+### Process Behavior
+
+ProcMon logged 3.6 million events. Filtered to `deltasec.exe`: rapid registry queries against `HKLM\SOFTWARE\Microsoft\Windows`, thread creation across multiple PIDs, file reads against the .NET Framework and NativeImages assembly cache. A lot of scanning. No encryption.
+
+![ProcMon — deltasec.exe activity](images/jigsaw-procmon-file-activity.png)
+
+### File Encryption
+
+Never triggered. This is a 2016 .NET sample on Windows 11 — the ransomware logic has compatibility issues that block detonation. No `.locked` extension, no ransom screen, no countdown timer. Persistence and process behavior came through clean.
+
+### Network
+
+Wireshark captured outbound TCP on port 443, but it overlapped with a .NET Framework download the sample needed to run. No way to isolate C2 traffic from framework traffic. Jigsaw’s C2 infrastructure has been offline since 2016 anyway.
+
+### MITRE ATT&CK — Dynamic Findings
+
+| Technique ID | Name | Evidence |
+|---|---|---|
+| T1486 | Data Encrypted for Impact | Attempted — blocked by Windows 11 compatibility |
+| T1547.001 | Boot/Logon Autostart: Registry Run Keys | deltasec.exe dropped to AppData, persistence confirmed |
+| T1036.005 | Masquerading | Binary renamed deltasechax, copied to mimic legitimate path |
+| T1083 | File and Directory Discovery | ProcMon showed directory enumeration across WinSxS |
+| T1012 | Query Registry | RegQueryKey and RegQueryValue hits on HKLM and HKCU |
+
+Medium post: https://medium.com/@jwilliams.cyber/hunting-jigsaw-on-swordfish-ii-dynamic-analysis-with-process-monitor-bf9d59f871f9
